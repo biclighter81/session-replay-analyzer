@@ -3,10 +3,10 @@ import * as fs from 'fs'
 import * as playwright from 'playwright'
 import { runA11Y } from './accessibility'
 import { newPlayerPage } from './player'
-import { newStorage } from './gcs'
 import * as Sentry from "@sentry/node";
 import { SENTRY_DSN, SENTRY_TRACE_SAMPLE_RATE, SENTRY_PROFILE_SAMPLE_RATE, ENVIRONMENT } from './config'
 import { ProfilingIntegration } from "@sentry/profiling-node";
+import { newStorage } from './storage'
 
 const storage = newStorage()
 const app = express()

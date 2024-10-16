@@ -4,20 +4,22 @@ import { MockStorage } from 'mock-gcs'
 import { coerceTimestamp, runA11Y } from '../../accessibility/index'
 import fs from 'fs'
 import path from 'path'
-import {BUCKET_NAME} from '../../config'
+import { BUCKET_NAME } from '../../config'
 import zlib from 'zlib'
+import { GCSStorageProvider } from '../../storage'
 
 const storage = new MockStorage()
 
 describe('runA11Y', () => {
   it('works', async () => {
+    const storageProvider = new GCSStorageProvider(storage)
     const data = fs.readFileSync(path.join(__dirname, '../../../mock/rrweb-simple.json'))
     await storage.bucket(BUCKET_NAME).file('test.json').save(zlib.gzipSync(data))
 
     const browser = await playwright.chromium.launch({ headless: true })
     try {
       const page = await newPlayerPage(browser)
-      const result = await runA11Y(storage, page, ['test.json'])
+      const result = await runA11Y(storageProvider, page, ['test.json'])
       expect(result.length).toBe(4)
     } catch (e) {
       console.log(e)
@@ -45,6 +47,7 @@ describe('coerceTimestamp', () => {
 
 describe('runA11YLargeReplay', () => {
   fit('works', async () => {
+    const storageProvider = new GCSStorageProvider(storage)
     const data = fs.readFileSync(path.join(__dirname, '../../../mock/events.json'))
     await storage.bucket(BUCKET_NAME).file('test.json').save(zlib.gzipSync(data))
 
@@ -56,7 +59,7 @@ describe('runA11YLargeReplay', () => {
       const page = await newPlayerPage(browser)
       console.timeEnd('newPlayerPage')
       console.time('runA11Y')
-      const result = await runA11Y(storage, page, ['test.json'])
+      const result = await runA11Y(storageProvider, page, ['test.json'])
       console.timeEnd('runA11Y')
       // expect(result.length).toBe(4)
     } catch (e) {

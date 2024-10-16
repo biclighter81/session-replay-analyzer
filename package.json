@@ -21,6 +21,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.670.0",
     "@axe-core/playwright": "^4.7.3",
     "@google-cloud/storage": "^7.1.0",
     "@playwright/test": "^1.38.1",
@@ -40,11 +41,17 @@
     "mocha": "^10.2.0",
     "mock-gcs": "^1.1.0",
     "playwright": "^1.38.1",
+    "rrweb-player": "^1.0.0-alpha.4",
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.1",
     "typescript": "^5.2.2"
   },
   "volta": {
     "node": "18.18.1"
+  },
+  "devDependencies": {
+    "@smithy/util-stream": "^3.1.9",
+    "@types/mock-aws-s3": "^2.6.3",
+    "aws-sdk-client-mock": "^4.1.0"
   }
 }

@@ -2,9 +2,8 @@ import { AxeBuilder } from '@axe-core/playwright'
 import type * as playwright from 'playwright'
 import { split } from './splitter'
 import { playRRWebEvents } from '../player'
-import { downloadFromFilenames } from '../gcs'
-import { type IStorage } from 'mock-gcs'
 import * as Sentry from "@sentry/node";
+import { StorageProvider } from '../storage'
 
 type AxeResults = Awaited<ReturnType<AxeBuilder['analyze']>>
 
@@ -28,10 +27,10 @@ interface AccessiblityIssue {
   timestamp: number
 }
 
-async function runA11Y (storage: IStorage, page: playwright.Page, filenames: string[]): Promise<AccessiblityIssue[]> {
+async function runA11Y(storageProvider: StorageProvider, page: playwright.Page, filenames: string[]): Promise<AccessiblityIssue[]> {
   // Download, parse, and collect the relevant RRWeb events.
   const segments = await Sentry.startSpan({ name: "Download Segments" }, async () => {
-    return await downloadFromFilenames(storage, filenames)
+    return await storageProvider.downloadFromFilenames(filenames)
   })
 
   console.time('split')
@@ -42,10 +41,10 @@ async function runA11Y (storage: IStorage, page: playwright.Page, filenames: str
   return await evaluateSnapshots(page, snapshots)
 }
 
-async function evaluateSnapshots (page: playwright.Page, events: any[]): Promise<AccessiblityIssue[]> {
+async function evaluateSnapshots(page: playwright.Page, events: any[]): Promise<AccessiblityIssue[]> {
 
   console.time('playRRWebEvents')
-  await Sentry.startSpan({ name: "Play RRWeb" }, async () => { await playRRWebEvents(page, events)} )
+  await Sentry.startSpan({ name: "Play RRWeb" }, async () => { await playRRWebEvents(page, events) })
   console.timeEnd('playRRWebEvents')
 
   let timestamp = 0
@@ -57,7 +56,7 @@ async function evaluateSnapshots (page: playwright.Page, events: any[]): Promise
   return await runAxe(page, timestamp)
 }
 
-async function runAxe (page: playwright.Page, timestamp: any): Promise<AccessiblityIssue[]> {
+async function runAxe(page: playwright.Page, timestamp: any): Promise<AccessiblityIssue[]> {
   try {
     console.time('axe')
 
@@ -79,7 +78,7 @@ async function runAxe (page: playwright.Page, timestamp: any): Promise<Accessibl
     console.timeEnd("axe");
 
     console.time('violations')
-    const violations =  processViolations(results, coerceTimestamp(timestamp))
+    const violations = processViolations(results, coerceTimestamp(timestamp))
     console.timeEnd('violations')
     return violations
   } catch (e) {
@@ -91,7 +90,7 @@ async function runAxe (page: playwright.Page, timestamp: any): Promise<Accessibl
   }
 }
 
-function coerceTimestamp (timestamp: any): number {
+function coerceTimestamp(timestamp: any): number {
   const number = Number(timestamp)
   if (Number.isNaN(number)) {
     return 0
@@ -100,7 +99,7 @@ function coerceTimestamp (timestamp: any): number {
   }
 }
 
-function processViolations (results: AxeResults, timestamp: number): AccessiblityIssue[] {
+function processViolations(results: AxeResults, timestamp: number): AccessiblityIssue[] {
   return results.violations.map((result) => {
     return {
       elements: result.nodes.map((node) => {
